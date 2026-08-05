@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "com.t3code.mcp-inventory",
+  "displayName": "MCP server inventory",
+  "version": "0.1.0",
+  "runtime": { "kind": "managed-app", "command": ["mcp-inventory-t3-plugin"], "restart": "on-failure" },
+  "contributes": {
+    "panels": [{ "id": "mcp.inventory", "title": "MCP servers", "surface": "project" }],
+    "settings": [{ "id": "mcp.inventory.sources", "title": "MCP configuration sources" }],
+    "commands": [{ "id": "mcp.inventory.refresh", "title": "Refresh MCP inventory" }]
+  },
+  "capabilities": [
+    { "kind": "filesystem.read", "roots": ["project.root", "user.config.mcp"] },
+    { "kind": "ui.embed", "surfaces": ["project"] }
+  ]
+}
