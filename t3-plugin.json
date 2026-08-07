@@ -6,7 +6,7 @@
   "runtime": { "kind": "managed-app", "command": ["mcp-inventory-t3-plugin"], "restart": "on-failure" },
   "contributes": {
     "panels": [{ "id": "mcp.inventory", "title": "MCP servers", "surface": "project" }],
-    "settings": [{ "id": "mcp.inventory.sources", "title": "MCP configuration sources" }],
+    "settings": [{ "id": "mcp.inventory.sources", "title": "MCP configuration sources", "scope": "server", "field": { "kind": "text", "default": "project,user", "placeholder": "project,user" } }],
     "commands": [{ "id": "mcp.inventory.refresh", "title": "Refresh MCP inventory" }]
   },
   "capabilities": [
