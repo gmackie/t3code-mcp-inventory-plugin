@@ -1,17 +1,49 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "com.t3code.mcp-inventory",
   "displayName": "MCP server inventory",
-  "version": "0.1.0",
-  "runtime": { "kind": "managed-app", "command":["bun","src/stdio.ts"], "restart": "on-failure" },
-  "contributes": {
-    "panels": [{ "id": "mcp.inventory", "title": "MCP servers", "surface": "project" }],
-    "settings": [{ "id": "mcp.inventory.sources", "title": "MCP configuration sources", "scope": "server", "field": { "kind": "text", "default": "project,user", "placeholder": "project,user" } }],
-    "settingsPanels": [{ "id": "mcp.inventory.settings", "title": "MCP inventory", "description": "Choose which configuration layers the inventory scans.", "settingIds": ["mcp.inventory.sources"] }],
-    "commands": [{ "id": "mcp.inventory.refresh", "title": "Refresh MCP inventory" }]
+  "version": "0.2.0",
+  "description": "Read-only inventory of MCP servers configured for a project and the user.",
+  "mcpServer": {
+    "name": "mcp-inventory",
+    "transport": {
+      "type": "stdio",
+      "command": "bun",
+      "args": [
+        "${pluginRoot}/src/mcp.ts"
+      ],
+      "env": [
+        {
+          "name": "MCP_INVENTORY_SOURCES",
+          "value": "project,user",
+          "title": "MCP configuration sources",
+          "description": "Comma-separated configuration layers to scan: project, user."
+        },
+        {
+          "name": "MCP_INVENTORY_USER_FILES",
+          "value": "",
+          "title": "User-level MCP config files",
+          "description": "Optional comma-separated absolute paths. Defaults to ~/.cursor/mcp.json and ~/.claude.json."
+        }
+      ]
+    }
   },
-  "capabilities": [
-    { "kind": "filesystem.read", "roots": ["project.root", "user.config.mcp"] },
-    { "kind": "ui.embed", "surfaces": ["project"] }
-  ]
+  "contributes": {
+    "panels": [
+      {
+        "id": "mcp-inventory",
+        "title": "MCP servers",
+        "scope": "project",
+        "resourceUri": "ui://mcp-inventory/inventory.html"
+      }
+    ],
+    "commands": [
+      {
+        "id": "mcp-inventory-open",
+        "title": "MCP inventory: Open and refresh",
+        "panel": "mcp-inventory"
+      }
+    ]
+  },
+  "t3Tools": []
 }
