@@ -42,7 +42,7 @@ export const REDACTED = "[redacted]";
 // (`--token sk-…`). The inventory promises never to return secret values, so
 // URL credentials and query values, and the values of secret-looking flags,
 // are replaced.
-const SECRET_NAME = /(token|secret|password|passwd|api[-_]?key|apikey|auth|credential|bearer)/i;
+const SECRET_NAME = /(token|secret|password|passwd|api[-_]?key|apikey|auth|authorization|credential|bearer|cookie)/i;
 
 export function redactUrl(raw: string): string {
   let url: URL;
@@ -58,21 +58,38 @@ export function redactUrl(raw: string): string {
   return url.toString().replaceAll(encodeURIComponent(REDACTED), REDACTED);
 }
 
+const HEADER_FLAG = /^(--header|-H)$/;
+
+// Redacts a free-form argument value: `Name: value` headers with a secret-looking
+// name (`Authorization: Bearer …`, `X-API-Key: …`), then any `Bearer`/`Basic`
+// credential wherever it appears, then URL credentials.
+function redactValue(value: string): string {
+  const header = /^([A-Za-z0-9_-]+)\s*:\s*(.+)$/.exec(value);
+  if (header && SECRET_NAME.test(header[1]!)) return `${header[1]}: ${REDACTED}`;
+  const scrubbed = value.replace(/\b(bearer|basic)\s+[^\s"',;]+/gi, `$1 ${REDACTED}`);
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(scrubbed) ? redactUrl(scrubbed) : scrubbed;
+}
+
 export function redactArgs(args: readonly string[]): string[] {
   const result: string[] = [];
   for (let index = 0; index < args.length; index++) {
     const arg = args[index]!;
-    const assignment = /^(-{0,2}[^=\s]+)=(.+)$/.exec(arg);
+    const assignment = /^(-{0,2}[^=\s:]+)=(.+)$/.exec(arg);
     if (assignment && SECRET_NAME.test(assignment[1]!)) {
       result.push(`${assignment[1]}=${REDACTED}`);
       continue;
     }
-    if (/^bearer\s+\S/i.test(arg)) {
-      result.push(`Bearer ${REDACTED}`);
+    if (assignment && HEADER_FLAG.test(assignment[1]!)) {
+      result.push(`${assignment[1]}=${redactValue(assignment[2]!)}`);
       continue;
     }
-    result.push(/^[a-z][a-z0-9+.-]*:\/\//i.test(arg) ? redactUrl(arg) : arg);
+    result.push(redactValue(arg));
     const next = args[index + 1];
+    if (HEADER_FLAG.test(arg) && next !== undefined) {
+      result.push(redactValue(next));
+      index++;
+      continue;
+    }
     if (/^--?[^=\s]+$/.test(arg) && SECRET_NAME.test(arg) && next !== undefined && !next.startsWith("-")) {
       result.push(REDACTED);
       index++;

@@ -34,6 +34,24 @@ describe("secret redaction", () => {
       .toEqual(["--api-key", "[redacted]", "--token=[redacted]", "Bearer [redacted]", "--port", "3000", "--header", "x"]);
   });
 
+  test("redacts mcp-remote --header credentials", () => {
+    const args = (raw: string[]) => parseInventory({ mcpServers: { a: { command: "npx", args: raw } } }, "user")[0]?.args;
+    expect(args(["mcp-remote", "https://mcp.example.test/sse", "--header", "Authorization: Bearer sk-live-1"]))
+      .toEqual(["mcp-remote", "https://mcp.example.test/sse", "--header", "Authorization: [redacted]"]);
+    expect(args(["-H", "Authorization:Bearer sk-2"])).toEqual(["-H", "Authorization: [redacted]"]);
+    expect(args(["--header", "X-API-Key: sk-3"])).toEqual(["--header", "X-API-Key: [redacted]"]);
+    expect(args(["--header=Authorization: Bearer sk-4"])).toEqual(["--header=Authorization: [redacted]"]);
+    expect(args(["--header", "Accept: application/json"])).toEqual(["--header", "Accept: application/json"]);
+  });
+
+  test("redacts bearer and secret header values anywhere in an argument", () => {
+    const args = (raw: string[]) => parseInventory({ mcpServers: { a: { command: "npx", args: raw } } }, "user")[0]?.args;
+    expect(args(["Authorization: Bearer sk-5", "X-API-Key: sk-6", "auth=Bearer sk-7", "token is bearer sk-8 here"]))
+      .toEqual(["Authorization: [redacted]", "X-API-Key: [redacted]", "auth=[redacted]", "token is bearer [redacted] here"]);
+    const out = JSON.stringify(args(["mcp-remote", "--header", "Authorization: Bearer sk-live-1", "Bearer sk-9"]));
+    expect(out).not.toContain("sk-");
+  });
+
   test("treats type http as streamable HTTP", () => {
     expect(parseInventory({ mcpServers: { a: { type: "http", url: "https://mcp.example.test" } } }, "user")[0]?.transport).toBe("streamable-http");
   });

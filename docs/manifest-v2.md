@@ -34,7 +34,7 @@ The v1 manifest's last version is at commit 9b63472.
 ## Server rules
 
 - **Visibility.** `mcp_inventory` is `["model", "app"]`. Agents can read the inventory, and the panel calls the same tool. It is read-only (`readOnlyHint`) and touches no network (`openWorldHint: false`).
-- **Secrets.** Environment variables are reported by name only. URL credentials and query values, `--token`/`--api-key`-style flag values, and `Bearer …` arguments come back as `[redacted]`. A file that fails to parse is reported as "Not valid JSON." and its contents are never echoed.
+- **Secrets.** Environment variables are reported by name only. URL credentials and query values, `--token`/`--api-key`-style flag values, secret-named headers such as `--header "Authorization: Bearer …"` or `X-API-Key: …`, and `Bearer …`/`Basic …` credentials anywhere in an argument come back as `[redacted]`. A file that fails to parse is reported as "Not valid JSON." and its contents are never echoed.
 - **Errors.** An unknown source in `MCP_INVENTORY_SOURCES`, a relative `MCP_INVENTORY_USER_FILES` entry, or a relative or missing `projectRoot` is a tool error with a message the user can act on. A missing config file is listed as `missing`. An unreadable or invalid file is listed as `error`, and the rest of the inventory is still returned.
 - **No project folder.** Without `projectRoot`, only user-level files are scanned, and the result says the project layer was skipped. It never guesses from the process's working directory, because the pool copy of the plugin does not run in the project.
 - **Stateless.** Every call re-reads the files. No state is kept in memory or on disk, so session copies and the pool copy always agree.
