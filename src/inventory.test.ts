@@ -22,3 +22,19 @@ describe("MCP inventory boundary", () => {
     ]);
   });
 });
+
+describe("secret redaction", () => {
+  test("redacts URL credentials and query values", () => {
+    expect(parseInventory({ mcpServers: { a: { url: "https://user:pw@mcp.example.test/sse?key=abc&x=1" } } }, "user")[0]?.url)
+      .toBe("https://[redacted]@mcp.example.test/sse?key=[redacted]&x=[redacted]");
+  });
+
+  test("redacts secret-looking flag values and bearer arguments", () => {
+    expect(parseInventory({ mcpServers: { a: { command: "npx", args: ["--api-key", "sk-1", "--token=sk-2", "Bearer sk-3", "--port", "3000", "--header", "x"] } } }, "user")[0]?.args)
+      .toEqual(["--api-key", "[redacted]", "--token=[redacted]", "Bearer [redacted]", "--port", "3000", "--header", "x"]);
+  });
+
+  test("treats type http as streamable HTTP", () => {
+    expect(parseInventory({ mcpServers: { a: { type: "http", url: "https://mcp.example.test" } } }, "user")[0]?.transport).toBe("streamable-http");
+  });
+});
